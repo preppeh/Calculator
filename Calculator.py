@@ -2,10 +2,10 @@
 #October 26, 2021
 #Lab 3
 #Calculator Class
-
+from collections import deque
 from tkinter import *
 import math
-
+import re
 
 class Calculator:
     def __init__(self, master):
@@ -16,6 +16,14 @@ class Calculator:
         self.equation = Entry(master, width = 36, borderwidth = 5)
         self.equation.grid(row = 0, column = 0, columnspan = 4, padx = 10, pady = 10)
         self.createButton()
+        self.operatorPriority = {
+            '^': 1,
+            '*': 2,
+            '/': 3,
+            '+': 4,
+            '-': 5,
+
+        }
         
     def createButton(self):
         #creation of the buttons to be used
@@ -71,27 +79,34 @@ class Calculator:
             r+=1
 
     
-
+    #function to create the button
     def addButton(self, value):
         return Button(self.master, text=value, width=9, command = lambda: self.clickButton(str(value)))
 
+    #allows for feedback from buttons being pressed
     def clickButton(self, value):
         current_equation = str(self.equation.get())
+
+        #if the user presses c, clear the current input
         if value == 'c':
             self.equation.delete(0, END)
         
+        #if the user presses =, evaluate the current equation
         elif value == '=':
+            #This if statement makes sure that the parenthesis are equal, if they aren't, prompts the user
             if self.closeParenCounter != self.openParenCounter:
                 self.equation = "Invalid parenthesis"
                 self.clickButton('c')
                 self.closeParenCounter = 0
                 self.openParenCounter = 0
                 return
+            self.shuntYard(current_equation)
             answer = str(eval(current_equation))
             #answer = evaluate(answer)
             self.equation.delete(-1, END)
             self.equation.insert(0, answer)
         
+
         elif value == '(':
             self.openParenCounter += 1
             self.equation.delete(0, END)
@@ -110,9 +125,83 @@ class Calculator:
             self.equation.delete(0, END)
             self.equation.insert(0, current_equation + value)
 
-    #def shuntYard(self, equation):
+    def shuntYard(self, equation):
+        equationTokens = re.split(r'\b', equation)
+        operators = []
+        postFix = []
+        for i in equationTokens:
+            if i.isdigit():
+                postFix.append(i)
+            elif i == '':
+                #print(i)
+                continue
+            elif i == '(':
+                operators.append(i)
+            elif i == ')':
+                while operators[len(operators)-1] != '(':
+                    postFix.append(operators[len(operators)-1])
+                    operators.pop()
+            else:
+                print(i)
+                if len(operators) != 0:
+                    while len(operators) != 0 & self.hasHigherPrec(operators[len(operators)-1], i):
+                        postFix.append(operators[len(operators)-1])
+                        operators.pop()
+                    operators.append(i)
+        while len(operators) != 0:
+            if operators[len(operators)-1] != '(':
+                postFix.append(operators[len(operators)-1])
+                print(operators(len(operators)-1))
+                operators.pop()
+            else:
+                operators.pop()
+        print(postFix)
+        return postFix
+                
+    #def validEquation(self, equation):
+
+    def hasHigherPrec(self, topOfStack, nextOperator):
+        return min(topOfStack, nextOperator)
+
     #def evaluate(self, equation):
-        
+    #    operands = []
+    #    answer = 0
+    #    for i in equation:
+    #        if equation[i].isdigit():
+    #            operands.append(equation[i])
+    #        else:
+    #            if equation[i] == '+':
+    #                answer += (operands[operands.len()-1] + operands[operands.len()-2])
+    #            elif equation[i] == '-':
+    #                answer += (operands[operands.len()-1] - operands[operands.len()-2])
+    #            elif equation[i] == '*':
+    #                answer += (operands[operands.len()-1] * operands[operands.len()-2])
+    #            elif equation[i] == '/':
+    #                answer += (operands[operands.len()-1] / operands[operands.len()-2])
+    #            elif equation[i] == '^':
+    #                answer += (operands[operands.len()-1] ** operands[operands.len()-2])
+    #            #sin
+    #            elif equation[i] == 'sin':
+    #            #cos
+    #            elif equation[i] == 'cos':
+    #            #tan
+    #            elif equation[i] == 'tan':
+    #            #arcsin
+    #            elif equation[i] == 'arcsin':
+    #            #arccos
+    #            elif equation[i] == 'arccos':
+    #            #arctan
+    #            elif equation[i] == 'arctan':
+    #            #log
+    #            elif equation[i] == 'log':
+    #            #ln
+    #            elif equation[i] == 'ln':
+    #            elif equation[i] == 'sqrt':
+    #                answer += (math.sqrt(operands[operands.len()-1]))
+
+    #def evaluate(self, equation):
+
+
 if __name__ == '__main__':
     root = Tk()
     my_gui = Calculator(root)
