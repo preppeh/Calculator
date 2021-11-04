@@ -91,13 +91,7 @@ class Calculator:
         
         #if the user presses =, evaluate the current equation
         elif value == '=':
-            #This if statement makes sure that the parenthesis are equal, if they aren't, prompts the user
-            if self.closeParenCounter != self.openParenCounter:
-                self.equation = "Invalid parenthesis"
-                self.clickButton('c')
-                self.closeParenCounter = 0
-                self.openParenCounter = 0
-                return
+          
             self.shuntYard(current_equation)
             answer = str(eval(current_equation))
             #answer = evaluate(answer)
@@ -134,7 +128,6 @@ class Calculator:
             if i.isdigit():
                 postFix.append(i)
             elif i == '':
-                #print(i)
                 continue
             elif i == '(':
                 operators.append(i)
@@ -145,7 +138,7 @@ class Calculator:
             else:
                 print(i)
                 if len(operators) != 0:
-                    while len(operators) != 0 & self.hasHigherPrec(operators[len(operators)-1], i):
+                    while len(operators) != 0 and self.hasHigherPrec(operators[len(operators)-1], i):
                         postFix.append(operators[len(operators)-1])
                         operators.pop()
                     operators.append(i)
@@ -161,8 +154,11 @@ class Calculator:
                 
     #def validEquation(self, equation):
 
-    def hasHigherPrec(self, topOfStack, nextOperator):
-        return min(topOfStack, nextOperator)
+    def hasHigherPrec(topOfStack, nextOperator):
+        if topOfStack < nextOperator:
+            return True
+        else:
+            return False
 
     #def evaluate(self, equation):
     #    operands = []
