@@ -9,8 +9,6 @@ import re
 
 class Calculator:
     def __init__(self, master):
-        self.openParenCounter = 0
-        self.closeParenCounter = 0
         self.master = master
         master.title("Calculator")
         self.equation = Entry(master, width = 36, borderwidth = 5)
@@ -126,9 +124,12 @@ class Calculator:
             self.equation.insert(0, current_equation + value)
 
     def shuntYard(self, equation):
+        #split the inputted equation into tokens
         equationTokens = re.split(r'\b', equation)
+        #create two lists: one for the postFix notation, one for storing operators
         operators = []
         postFix = []
+        #start organizing the tokens
         for i in equationTokens:
             if i.isdigit():
                 postFix.append(i)
