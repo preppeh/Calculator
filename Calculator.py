@@ -7,6 +7,13 @@ from tkinter import *
 import math
 import re
 
+operatorPriority = {
+    '^': 1,
+    '*': 2,
+    '/': 2,
+    '+': 3,
+    '-': 3,
+} 
 class Calculator:
     def __init__(self, master):
         self.master = master
@@ -21,6 +28,11 @@ class Calculator:
             '+': 4,
             '-': 5,
 
+        }
+
+        self.functions = {
+            'sin' : 'sin(',
+            'cos' : 'cos'
         }
         
     def createButton(self):
@@ -92,34 +104,32 @@ class Calculator:
         #if the user presses =, evaluate the current equation
         elif value == '=':
           
-            self.shuntYard(current_equation)
-            answer = str(eval(current_equation))
-            #answer = evaluate(answer)
+            postFix = self.shuntYard(current_equation)
+            answer = self.evaluate(postFix)
             self.equation.delete(-1, END)
             self.equation.insert(0, answer)
         
 
         elif value == '(':
-            self.openParenCounter += 1
             self.equation.delete(0, END)
             self.equation.insert(0, current_equation + value)
 
         elif value == ')':
-            self.closeParenCounter += 1
             self.equation.delete(0, END)
             self.equation.insert(0, current_equation + value)
 
-        #elif value == 'bcksp':
-        #    self.equation = self.equation[:-1]
-        #    current_equation.set(self.equation)
+        elif value == 'bcksp':
+            self.equation.delete(0, END)
+            current_equation = current_equation[:-1]
+            self.equation.insert(0, current_equation)
 
         else:
             self.equation.delete(0, END)
             self.equation.insert(0, current_equation + value)
 
     def shuntYard(self, equation):
-        #split the inputted equation into tokens
-        equationTokens = re.split(r'\b', equation)
+    #split the inputted equation into tokens
+        equationTokens = re.findall(r'\*|\+|\^|\-|\/|ln|tan|arccos|arctan|arcsin|log|cos|sin|sqrt|\d+|\)|\(', equation)
         #create two lists: one for the postFix notation, one for storing operators
         operators = []
         postFix = []
@@ -127,74 +137,89 @@ class Calculator:
         for i in equationTokens:
             if i.isdigit():
                 postFix.append(i)
-            elif i == '':
-                continue
+            elif i == 'cos' or i == 'sin' or i == 'tan' or i == 'cos' or i == 'arcsin' or i == 'arccos' or i == 'arctan' or i == 'sqrt' or i == 'log' or i == 'ln':
+                operators.append(i)
+            elif i == '+' or i == '-' or i == '*' or i == '/' or i == '^':
+                while len(operators) != 0 and operators[-1] != '(' and (operatorPriority[operators[-1]] < operatorPriority[i]):
+                    postFix.append(operators.pop())
+                operators.append(i)
             elif i == '(':
                 operators.append(i)
             elif i == ')':
-                while operators[len(operators)-1] != '(':
-                    postFix.append(operators[len(operators)-1])
-                    operators.pop()
-            else:
-                print(i)
-                if len(operators) != 0:
-                    while len(operators) != 0 and self.hasHigherPrec(operators[len(operators)-1], i):
-                        postFix.append(operators[len(operators)-1])
-                        operators.pop()
-                    operators.append(i)
+                while operators[-1] != '(':
+                    postFix.append(operators.pop())
+                operators.pop()
+                if operators[-1] == 'cos' or operators[-1] == 'sin' or operators[-1] == 'tan' or operators[-1] == 'cos' or operators[-1] == 'arcsin' or operators[-1] == 'arccos' or operators[-1] == 'arctan' or operators[-1] == 'sqrt' or operators[-1] == 'log' or operators[-1] == 'ln':
+                    postFix.append(operators.pop())
         while len(operators) != 0:
-            if operators[len(operators)-1] != '(':
-                postFix.append(operators[len(operators)-1])
-                print(operators(len(operators)-1))
-                operators.pop()
-            else:
-                operators.pop()
-        print(postFix)
+            postFix.append(operators.pop())
+            
         return postFix
                 
-    #def validEquation(self, equation):
+    #def validEquation(self, equation)
 
-    def hasHigherPrec(topOfStack, nextOperator):
-        if topOfStack < nextOperator:
-            return True
-        else:
-            return False
-
-    #def evaluate(self, equation):
-    #    operands = []
-    #    answer = 0
-    #    for i in equation:
-    #        if equation[i].isdigit():
-    #            operands.append(equation[i])
-    #        else:
-    #            if equation[i] == '+':
-    #                answer += (operands[operands.len()-1] + operands[operands.len()-2])
-    #            elif equation[i] == '-':
-    #                answer += (operands[operands.len()-1] - operands[operands.len()-2])
-    #            elif equation[i] == '*':
-    #                answer += (operands[operands.len()-1] * operands[operands.len()-2])
-    #            elif equation[i] == '/':
-    #                answer += (operands[operands.len()-1] / operands[operands.len()-2])
-    #            elif equation[i] == '^':
-    #                answer += (operands[operands.len()-1] ** operands[operands.len()-2])
-    #            #sin
-    #            elif equation[i] == 'sin':
-    #            #cos
-    #            elif equation[i] == 'cos':
-    #            #tan
-    #            elif equation[i] == 'tan':
-    #            #arcsin
-    #            elif equation[i] == 'arcsin':
-    #            #arccos
-    #            elif equation[i] == 'arccos':
-    #            #arctan
-    #            elif equation[i] == 'arctan':
-    #            #log
-    #            elif equation[i] == 'log':
-    #            #ln
-    #            elif equation[i] == 'ln':
-    #            elif equation[i] == 'sqrt':
-    #                answer += (math.sqrt(operands[operands.len()-1]))
+    def evaluate(self, equation):
+        operands = []
+        for i in equation:
+            if i.isdigit():
+                operands.append(int(i))
+            elif i == '+':
+                tempAns = (operands.pop() + operands.pop())
+                operands.append(tempAns)
+            elif i == '-':
+                var1 = operands.pop()
+                var2 = operands.pop()
+                tempAns = (var2 - var1)
+                operands.append(tempAns)
+            elif i == '*':
+                tempAns = (operands.pop() * operands.pop())
+                operands.append(tempAns)
+            elif i == '/':
+                var1 = operands.pop()
+                var2 = operands.pop()
+                tempAns = (var2 / var1)
+                operands.append(tempAns)
+            elif i == '^':
+                var1 = operands.pop()
+                var2 = operands.pop()
+                tempAns = (var2 ** var1)
+                operands.append(tempAns)
+            ##sin
+            elif i == 'sin':
+                tempAns = (math.sin(operands.pop()))
+                operands.append(tempAns)
+            ###cos
+            elif i == 'cos':
+                tempAns = (math.cos(operands.pop()))
+                operands.append(tempAns)
+            ###tan
+            elif i == 'tan':
+                tempAns = (math.tan(operands.pop()))
+                operands.append(tempAns)
+            ###arcsin
+            elif i == 'arcsin':
+                tempAns = (math.asin(operands.pop()))
+                operands.append(tempAns)
+            ###arccos
+            elif i == 'arccos':
+                tempAns = (math.acos(operands.pop()))
+                operands.append(tempAns)
+            ###arctan
+            elif i == 'arctan':
+                tempAns = (math.atan(operands.pop()))
+                operands.append(tempAns)
+            ###log
+            elif i == 'log':
+                tempAns = (math.log10(operands.pop()))
+                operands.append(tempAns)
+            ###ln
+            elif i == 'ln':
+                tempAns = (math.log(operands.pop()))
+                operands.append(tempAns)
+            #elif i == 'sqrt':
+                tempAns = (math.sqrt(operands.pop()))
+                operands.append(tempAns)
+        return operands.pop()
 
     #def evaluate(self, equation):
 
